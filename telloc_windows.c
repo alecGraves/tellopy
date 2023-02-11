@@ -1,5 +1,5 @@
-// Author: Alec Graves
-
+// Contains the Windows implementation of the telloc library
+//
 #include "telloc.h"
 
 #include <stdio.h>
@@ -64,7 +64,8 @@ unsigned __stdcall thread_state(void *arg) {
         int bytes_received = recv(sock, buffer, sizeof(buffer), 0);
         if (bytes_received == SOCKET_ERROR) {
             printf("State thread: error recieving data\n");
-            Sleep(50);
+            // sleep for 5ms
+            Sleep(5);
         }
 
         // Windows acquire handle to the mutex
@@ -162,8 +163,9 @@ unsigned __stdcall thread_video(void *arg) {
         // receive data on the socket
         int bytes_received = recvfrom(sock, udp_buffer, 65507, 0, NULL, NULL);
         if (bytes_received == SOCKET_ERROR) {
-//            printf("Error receiving data: %d\n", WSAGetLastError());
-            Sleep(1);
+            printf("Error receiving data: %d\n", WSAGetLastError());
+            // sleep for 5ms
+            Sleep(5);
             continue;
         }
 
@@ -283,8 +285,8 @@ unsigned __stdcall thread_keepalive(void* arg) {
         // send the keepalive command
         telloc_send_command(connection, query, strlen(query), buffer, sizeof(buffer));
 
-        // wait 1 second
-        Sleep(1000);
+        // wait 5 seconds
+        Sleep(5000);
     }
 
     closesocket(sock);

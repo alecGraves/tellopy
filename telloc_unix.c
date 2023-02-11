@@ -1,6 +1,5 @@
-// This file is part of the Telloc project.
-// It contains a unix implementation of the telloc library.
-
+// Contains a unix implementation of the telloc library.
+//
 #include "telloc.h"
 #include "video.h"
 
@@ -75,7 +74,8 @@ void* thread_state(void* arg) {
         int bytes_received = recvfrom(sock, buffer, TELLOC_STATE_SIZE, 0, NULL, NULL);
         if (bytes_received == -1) {
             printf("State thread: error recieving data\n");
-            sleep(50);
+            // sleep for 5 ms
+            usleep(5000);
         }
 
         // Windows acquire handle to the mutex
@@ -171,7 +171,8 @@ void* thread_video(void* arg) {
         int bytes_received = recvfrom(sock, udp_buffer, 65507, 0, NULL, NULL);
         if (bytes_received == -1) {
             printf("Video thread: error recieving data\n");
-            sleep(50);
+            // sleep for 1 ms
+            usleep(1000);
         }
 
         // check if the udp packet is a valid h264 start frame
@@ -263,7 +264,7 @@ int telloc_read_image(void *connection_ptr, unsigned char* image_buffer, unsigne
 }
 
 
-// thread to repeatedly send keepalive
+// thread to repeatedly send keepalive (tello connection will timeout after 15 seconds).
 // argument: telloc_connection *connection
 void* thread_keepalive(void* arg) {
     printf("Keepalive thread started\n");
@@ -289,8 +290,8 @@ void* thread_keepalive(void* arg) {
         // send the keepalive command
         telloc_send_command(connection, query, strlen(query), buffer, sizeof(buffer));
 
-        // wait 1 second
-        sleep(1000);
+        // wait for 5 seconds
+        sleep(5);
     }
 
     close(sock);

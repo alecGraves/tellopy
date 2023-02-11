@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.1)
 project(telloc C)
+# add -DBUILD_TESTING=ON to the cmake command to build the test program
 
-set(CMAKE_C_STANDARD 11)
+# set C 89 standard
+set(CMAKE_C_STANDARD 99)
+
+# pedantic
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -Werror")
 
 # check if we are on Windows (should work with MinGW and Visual Studio)
 if (WIN32)
@@ -30,10 +35,7 @@ else() # Unix-based systems (MacOS or Linux)
     find_path(SWSCALE_INCLUDE_DIR libswscale/swscale.h)
     find_library(swscale_LIBRARIES swscale)
 
-    include_directories(${AVCODEC_INCLUDE_DIR})
-    include_directories(${AVFORMAT_INCLUDE_DIR})
-    include_directories(${AVUTIL_INCLUDE_DIR})
-    include_directories(${SWSCALE_INCLUDE_DIR})
+    include_directories(${AVCODEC_INCLUDE_DIR}, ${AVFORMAT_INCLUDE_DIR}, ${AVUTIL_INCLUDE_DIR}, ${SWSCALE_INCLUDE_DIR})
 
     add_library(telloc SHARED telloc_unix.c video.c)
     target_link_libraries(telloc ${avformat_LIBRARIES} ${avcodec_LIBRARIES} ${avutil_LIBRARIESS} ${swscale_LIBRARIES})
@@ -41,8 +43,13 @@ endif()
 
 # if you want to build the test program
 if(BUILD_TESTING)
-    # main.c is just a test program. It prints state and video data on Unix
+    # main is just a test program. It prints state and video data on Unix
     #  and opens a window to display the video on Windows.
-    add_executable(main main.c)
-    target_link_libraries(main telloc)
+    if (WIN32)
+        add_executable(main main_windows.c)
+        target_link_libraries(main telloc)
+    else()
+        add_executable(main main.c)
+        target_link_libraries(main telloc)
+    endif()
 endif()

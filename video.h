@@ -1,6 +1,5 @@
-// This file is part of the Telloc project.
-// It contains utility functions to decode h264 video streams.
-
+// Contains utility functions to decode h264 video streams for the telloc project
+//
 #ifndef TELLOC_VIDEO_H
 #define TELLOC_VIDEO_H
 

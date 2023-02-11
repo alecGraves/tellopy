@@ -1,3 +1,5 @@
+// Include file specifying the interface for the telloc library.
+//
 #ifndef TELLOC_TELLOC_H
 #define TELLOC_TELLOC_H
 

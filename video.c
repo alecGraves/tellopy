@@ -1,8 +1,5 @@
+// Contains the implementation for the video decoder for the telloc library
 //
-// Description:
-//   This file contains the implementation for the video decoder.
-//
-
 #include "video.h"
 
 #include <libavutil/imgutils.h>
