@@ -200,7 +200,7 @@ void* thread_video(void* arg) {
             memcpy(h264_buffer, udp_buffer, bytes_received);
             h264_buffer_size = bytes_received;
 
-        } else {
+        } else if (h264_buffer_size > 0) {
             // if the udp packet is not a valid h264 start frame, copy the data to the end of the h264 buffer
             memcpy(h264_buffer + h264_buffer_size, udp_buffer, bytes_received);
             h264_buffer_size += bytes_received;
