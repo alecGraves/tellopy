@@ -66,6 +66,7 @@ unsigned __stdcall thread_state(void *arg) {
             printf("State thread: error recieving data\n");
             // sleep for 5ms
             Sleep(5);
+            continue;
         }
 
         // Windows acquire handle to the mutex
@@ -280,13 +281,20 @@ unsigned __stdcall thread_keepalive(void* arg) {
     char buffer[1024];
     char* query = "battery?";
 
+    // use win32 to get current time in seconds
+    unsigned int keepalive_time = GetTickCount() / 1000;
+
     // while alive, send keepalive
     while (connection->alive) {
-        // send the keepalive command
-        telloc_send_command(connection, query, strlen(query), buffer, sizeof(buffer));
 
-        // wait 5 seconds
-        Sleep(5000);
+        // if time since last keepalive is greater than 5 seconds, send keepalive
+        if (GetTickCount() / 1000 - keepalive_time > 5) {
+            // send the keepalive command
+            telloc_send_command(connection, query, strlen(query), buffer, sizeof(buffer));
+            keepalive_time = GetTickCount() / 1000;
+        }
+        // wait 50 ms
+        Sleep(50);
     }
 
     closesocket(sock);

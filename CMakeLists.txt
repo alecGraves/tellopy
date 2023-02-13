@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(telloc C)
 # add -DBUILD_TESTING=ON to the cmake command to build the test program
 
-# set C 89 standard
+# set C 99 standard
 set(CMAKE_C_STANDARD 99)
 
 # pedantic

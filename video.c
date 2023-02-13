@@ -128,11 +128,15 @@ int telloc_video_decoder_is_start_code(unsigned char* video_stream, unsigned int
 // function to free the video decoder
 int telloc_video_decoder_free(telloc_video_decoder* decoder) {
     // free the ffmpeg state
-    avcodec_free_context(&decoder->codec_context);
-    av_freep(&decoder->frame->data[0]);
-    av_frame_free(&decoder->frame);
-    av_freep(&decoder->frame_rgb->data[0]);
-    av_frame_free(&decoder->frame_rgb);
+    if(decoder->codec_context) {
+        avcodec_free_context(&decoder->codec_context);
+    }
+    if (decoder->frame) {
+        av_frame_free(&decoder->frame);
+    }
+    if(decoder->frame_rgb){
+        av_frame_free(&decoder->frame_rgb);
+    }
     av_packet_free(&decoder->packet);
     av_freep(&decoder->frame_buffer);
     sws_freeContext(decoder->sws_context);

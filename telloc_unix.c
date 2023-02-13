@@ -76,6 +76,7 @@ void* thread_state(void* arg) {
             printf("State thread: error recieving data\n");
             // sleep for 5 ms
             usleep(5000);
+            continue;
         }
 
         // Windows acquire handle to the mutex
@@ -173,6 +174,7 @@ void* thread_video(void* arg) {
             printf("Video thread: error recieving data\n");
             // sleep for 1 ms
             usleep(1000);
+            continue;
         }
 
         // check if the udp packet is a valid h264 start frame
@@ -285,13 +287,18 @@ void* thread_keepalive(void* arg) {
     char buffer[1024];
     char* query = "battery?";
 
+    // get current time using time.h
+    time_t last_keepalive_time = time(NULL);
+
     // while alive, send keepalive
     while (connection->alive) {
         // send the keepalive command
-        telloc_send_command(connection, query, strlen(query), buffer, sizeof(buffer));
-
-        // wait for 5 seconds
-        sleep(5);
+        // if time since last keepalive command is greater than 10 seconds, send the keepalive command
+        if (time(NULL) - last_keepalive_time > 10) {
+            telloc_send_command(connection, query, strlen(query), buffer, sizeof(buffer));
+            last_keepalive_time = time(NULL);
+        }
+        usleep(5000);
     }
 
     close(sock);
@@ -306,6 +313,22 @@ int telloc_bind_udp_socket(int *sock, char* address, unsigned short port) {
     *sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (*sock == -1) {
         printf("Error creating socket: %d\n" , errno);
+        return 1;
+    }
+
+    // set the socket timeout to 1 second
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    if (setsockopt(*sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        printf("Error setting socket timeout: %d\n", errno);
+        return 1;
+    }
+
+    // allow rebinding
+    int optval = 1;
+    if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        printf("Error setting socket option: %d\n", errno);
         return 1;
     }
 
