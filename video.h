@@ -35,7 +35,7 @@ int telloc_video_decoder_init(telloc_video_decoder* decoder);
 int telloc_video_decoder_decode(telloc_video_decoder* decoder, unsigned char* video_stream, unsigned int video_stream_length);
 
 // function to check if a frame is a valid h264 start code
-int telloc_video_decoder_is_start_code(unsigned char* video_stream, unsigned int video_stream_length);
+int telloc_video_decoder_is_start_code(const unsigned char* video_stream, unsigned int video_stream_length);
 
 // function to free the video decoder
 int telloc_video_decoder_free(telloc_video_decoder* decoder);

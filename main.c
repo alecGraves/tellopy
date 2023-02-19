@@ -10,14 +10,15 @@
 
 // test main function
 int main(void) {
-    // connect to the Tello drone from a specific interface
-    void* connection;
-//    if (telloc_connect_interface(&connection, "192.168.10.2")) {
-//        return 1;
-//    }
-
     // default connect on all interfaces 0.0.0.0
-    if (telloc_connect(&connection)) {
+    telloc_connection *connection=telloc_connect();
+
+//    // connect on a specific interface
+//    telloc_connection *connection= = telloc_connect_interface(""192.168.10.2");
+
+    // check if connection was made successfully
+    if (!connection) {
+        printf("Connection failed\n");
         return 1;
     }
 
@@ -34,7 +35,11 @@ int main(void) {
     unsigned int image_bytes;
     unsigned int image_width;
     unsigned int image_height;
-    while(1) {
+
+
+    // check if user is pressing any key asynchronously
+    while (1) {
+
         // read a video frame from the Tello drone
         if(!telloc_read_image(connection, image, TELLOC_VIDEO_SIZE, &image_bytes, &image_width, &image_height)) {
             printf("Image: %d bytes; %d x %d\n", image_bytes, image_width, image_height);
@@ -47,9 +52,10 @@ int main(void) {
     }
 
     // disconnect from the Tello drone
-    if (telloc_disconnect(&connection)) {
+    if (telloc_disconnect(connection)) {
         return 1;
     }
+    connection = NULL;
 
     return 0;
 }

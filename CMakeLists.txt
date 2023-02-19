@@ -38,7 +38,7 @@ else() # Unix-based systems (MacOS or Linux)
     include_directories(${AVCODEC_INCLUDE_DIR}, ${AVFORMAT_INCLUDE_DIR}, ${AVUTIL_INCLUDE_DIR}, ${SWSCALE_INCLUDE_DIR})
 
     add_library(telloc SHARED telloc_unix.c video.c)
-    target_link_libraries(telloc ${avformat_LIBRARIES} ${avcodec_LIBRARIES} ${avutil_LIBRARIESS} ${swscale_LIBRARIES})
+    target_link_libraries(telloc ${avformat_LIBRARIES} ${avcodec_LIBRARIES} ${avutil_LIBRARIESS} ${swscale_LIBRARIES} pthread)
 endif()
 
 # if you want to build the test program

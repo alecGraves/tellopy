@@ -32,12 +32,9 @@ int telloc_video_decoder_init(telloc_video_decoder* decoder) {
     // set the codec context options
     av_opt_set(decoder->codec_context->priv_data, "preset", "ultrafast", 0);
     av_opt_set(decoder->codec_context->priv_data, "tune", "zerolatency", 0);
-//    av_opt_set(decoder->codec_context->priv_data, "crf", "28", 0);
     decoder->codec_context->flags |= AV_CODEC_FLAG_LOW_DELAY;
-//    decoder->codec_context->flags |= AV_CODEC_FLAG_TRUNCATED;
     decoder->codec_context->flags2 |= AV_CODEC_FLAG2_FAST;
     decoder->codec_context->thread_count = 1;
-//    decoder->codec_context->thread_type = FF_THREAD_SLICE;
     decoder->codec_context->error_concealment = 3;
     decoder->codec_context->workaround_bugs = FF_BUG_AUTODETECT;
     decoder->codec_context->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -82,7 +79,7 @@ int telloc_video_decoder_decode(telloc_video_decoder* decoder, unsigned char* vi
     av_packet_unref(decoder->packet);
     decoder->packet = av_packet_alloc();
     decoder->packet->data = video_stream;
-    decoder->packet->size = video_stream_length;
+    decoder->packet->size = (int) video_stream_length;
     avcodec_send_packet(decoder->codec_context, decoder->packet);
 
     // check if the frame is ready
@@ -115,7 +112,7 @@ int telloc_video_decoder_decode(telloc_video_decoder* decoder, unsigned char* vi
 }
 
 // function to check if a frame is a valid h264 start code
-int telloc_video_decoder_is_start_code(unsigned char* video_stream, unsigned int video_stream_length) {
+int telloc_video_decoder_is_start_code(const unsigned char* video_stream, unsigned int video_stream_length) {
     if (video_stream_length < 4) {
         return 0;
     }

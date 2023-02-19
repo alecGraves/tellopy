@@ -9,7 +9,7 @@
 #include <process.h>
 #include "video.h"
 
-typedef struct {
+struct telloc_connection_ {
     // thread synchronization
     unsigned alive;
 
@@ -34,7 +34,7 @@ typedef struct {
     HANDLE state_thread;
     HANDLE video_thread;
     HANDLE keepalive_thread;
-} telloc_connection;
+};
 
 
 // thread function to recieve state data from a UDP socket.
@@ -95,12 +95,9 @@ unsigned __stdcall thread_state(void *arg) {
 // argument: telloc_connection *connection
 // argument: char *buffer
 // argument: unsigned buffer_size
-int telloc_read_state(void *connection_ptr, char *buffer, unsigned buffer_size) {
-    // get the connection from the pointer
-    telloc_connection *connection = (telloc_connection *) connection_ptr;
-
+int telloc_read_state(telloc_connection *connection, char *state_buffer, unsigned state_buffer_length) {
     // clear the state buffer
-    memset(buffer, 0, buffer_size);
+    memset(state_buffer, 0, state_buffer_length);
 
     // check if the state socket is open
     if (connection == NULL || !connection->alive) {
@@ -109,7 +106,7 @@ int telloc_read_state(void *connection_ptr, char *buffer, unsigned buffer_size) 
         return 1;
     }
 
-    if (buffer_size < connection->state_size) {
+    if (state_buffer_length < connection->state_size) {
         printf("Buffer size too small to hold state data\n");
         return 1;
     }
@@ -123,7 +120,7 @@ int telloc_read_state(void *connection_ptr, char *buffer, unsigned buffer_size) 
     WaitForSingleObject(connection->state_mutex, INFINITE);
 
     // copy the data to the connection's state buffer
-    memcpy(buffer, connection->state_buffer, connection->state_size);
+    memcpy(state_buffer, connection->state_buffer, connection->state_size);
     connection->state_size = 0;
 
     // release the mutex
@@ -171,35 +168,36 @@ unsigned __stdcall thread_video(void *arg) {
         }
 
         // check if the udp packet is a valid h264 start frame
-        if (telloc_video_decoder_is_start_code(udp_buffer, bytes_received)) {
+        int new_frame = telloc_video_decoder_is_start_code(udp_buffer, bytes_received);
+        if (new_frame) {
             // check if there is a previous frame
             if (h264_buffer_size > 0) {
                 // send the completed video packet to the video decoder
                 telloc_video_decoder_decode(&connection->video_decoder, h264_buffer, h264_buffer_size);
-
-                // check if there is a new frame
-                if (connection->video_decoder.frame_ready) {
-
-                    // Windows acquire handle to the mutex
-                    WaitForSingleObject(connection->video_mutex, INFINITE);
-
-                    // copy the data to the connection's video buffer
-                    memcpy(connection->video_buffer, connection->video_decoder.frame_buffer, connection->video_decoder.frame_size);
-                    connection->video_decoder.frame_ready = 0;
-                    connection->video_size = connection->video_decoder.frame_size;
-
-                    // release the mutex
-                    ReleaseMutex(connection->video_mutex);
-                }
             }
-            // copy the udp packet to the h264 buffer
+            // set buffer to the new frame's data
             memcpy(h264_buffer, udp_buffer, bytes_received);
             h264_buffer_size = bytes_received;
 
         } else if (h264_buffer_size > 0) {
-            // if the udp packet is not a valid h264 start frame, copy the data to the end of the h264 buffer
+            // not a new frame, but we already have data; append the data to the h264 buffer
             memcpy(h264_buffer + h264_buffer_size, udp_buffer, bytes_received);
             h264_buffer_size += bytes_received;
+        }
+
+        // check if there is a new frame
+        if (new_frame && connection->video_decoder.frame_ready) {
+
+            // Windows acquire handle to the mutex
+            WaitForSingleObject(connection->video_mutex, INFINITE);
+
+            // copy the data to the connection's video buffer
+            memcpy(connection->video_buffer, connection->video_decoder.frame_buffer, connection->video_decoder.frame_size);
+            connection->video_decoder.frame_ready = 0;
+            connection->video_size = connection->video_decoder.frame_size;
+
+            // release the mutex
+            ReleaseMutex(connection->video_mutex);
         }
     }
 
@@ -208,6 +206,7 @@ unsigned __stdcall thread_video(void *arg) {
 
     // free the buffers
     free(udp_buffer);
+    free(h264_buffer);
 
     return 0;
 }
@@ -217,10 +216,7 @@ unsigned __stdcall thread_video(void *arg) {
 // argument: telloc_connection *connection
 // argument: unsigned char *buffer
 // argument: unsigned buffer_size
-int telloc_read_image(void *connection_ptr, unsigned char* image_buffer, unsigned int image_buffer_size, unsigned int* image_bytes, unsigned int* image_width, unsigned int* image_height) {
-    // get the connection from the pointer
-    telloc_connection *connection = (telloc_connection *) connection_ptr;
-
+int telloc_read_image(telloc_connection *connection, unsigned char* image, unsigned int image_buffer_size, unsigned int* image_bytes, unsigned int* image_width, unsigned int* image_height) {
     // check if the video socket is open
     if (connection == NULL || !connection->alive) {
         printf("Connection not initialized; Video not received.\n");
@@ -242,7 +238,7 @@ int telloc_read_image(void *connection_ptr, unsigned char* image_buffer, unsigne
     }
 
     // copy the data from the connection's video buffer
-    memcpy(image_buffer, connection->video_buffer, connection->video_size);
+    memcpy(image, connection->video_buffer, connection->video_size);
     *image_bytes = connection->video_size;
     connection->video_size = 0;
     *image_width = connection->video_decoder.frame_width;
@@ -253,7 +249,7 @@ int telloc_read_image(void *connection_ptr, unsigned char* image_buffer, unsigne
 
     return 0;
 
-    error:
+error:
     // release the mutex
     ReleaseMutex(connection->video_mutex);
     return 1;
@@ -327,19 +323,18 @@ int telloc_bind_udp_socket(SOCKET *sock, char* address, unsigned short port) {
 
 
 // function to connect to the Tello drone on a specified interface address
-int telloc_connect_interface(void **connection_ptr_addr, char *interface_address) {
+telloc_connection *telloc_connect_interface(const char *interface_address) {
     printf("Connecting to Tello on interface %s\n", interface_address);
 
     // initialize Windows networking
     WSADATA wsa_data;
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
         printf("Error initializing Windows networking\n");
-        return 1;
+        return NULL;
     }
 
     // allocate a connection pointer
     telloc_connection *connection = malloc(sizeof(telloc_connection));
-    *connection_ptr_addr = connection;
 
     // set the connection's alive flag to 0 to stop any threads
     connection->alive = 0;
@@ -407,7 +402,7 @@ int telloc_connect_interface(void **connection_ptr_addr, char *interface_address
     connection->video_thread = (HANDLE) _beginthreadex(NULL, 0, &thread_video, connection, 0, NULL);
     connection->keepalive_thread = (HANDLE) _beginthreadex(NULL, 0, &thread_keepalive, connection, 0, NULL);
 
-    return 0;
+    return connection;
 
 error:
     // close the sockets
@@ -421,21 +416,18 @@ error:
     // reset the connection pointer
     *connection_ptr_addr = NULL;
 
-    return 1;
+    return NULL;
 }
 
 
 // default interface to all 0.0.0.0
-int telloc_connect(void** connection_ptr_addr) {
-    return telloc_connect_interface(connection_ptr_addr, "0.0.0.0");
+telloc_connection *telloc_connect(void) {
+    return telloc_connect_interface("0.0.0.0");
 }
 
 
 // function to send a command to the drone
-int telloc_send_command(void* connection_ptr, char* command, unsigned length, char* response, unsigned int response_length) {
-    // get the connection from the pointer
-    telloc_connection* connection = (telloc_connection*) connection_ptr;
-
+int telloc_send_command(telloc_connection *connection, const char* command, unsigned length, char* response, unsigned int response_length) {
     // check if the command socket is open
     if (connection == NULL || !connection->alive) {
         printf("Connection not initialized; Command not sent.\n");
@@ -495,10 +487,7 @@ error:
 
 
 // function to disconnect from the drone
-int telloc_disconnect(void** connection_ptr_addr) {
-    // get the connection from the pointer
-    telloc_connection* connection = (telloc_connection*) *connection_ptr_addr;
-
+int telloc_disconnect(telloc_connection *connection) {
     // check if the connection is open
     if (connection == NULL || !connection->alive) {
         printf("Connection not initialized; Disconnect not completed.\n");
@@ -544,9 +533,6 @@ int telloc_disconnect(void** connection_ptr_addr) {
 
     // free the connection
     free(connection);
-
-    // set the connection pointer to NULL
-    *connection_ptr_addr = NULL;
 
     return 0;
 }

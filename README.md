@@ -61,8 +61,7 @@ telloc spawns three threads when you call `telloc_connect(...)`:
 
 To attempt a connection and spawn threads, you can run
 
-    void* connection;
-    int ret = telloc_connect(&connection);
+    tello_connection *connection = telloc_connect();
 
 When you want to send data to a successful connection, you do:
 
@@ -79,18 +78,25 @@ To read the most recent video frame, you can do the following:
     unsigned int image_width;
     unsigned int image_height;
     int ret_video = telloc_read_image(connection, image, TELLOC_VIDEO_SIZE, &image_bytes, &image_width, &image_height);
-    printf("Image: %d bytes; %d x %d\n", image_bytes, image_width, image_height);
+    if (ret_video==0)
+        printf("Image: %d bytes; %d x %d\n", image_bytes, image_width, image_height);
 
 To read the most recent state string, you can do the following:
 
     char *state = malloc(TELLOC_STATE_SIZE);
     int ret_state = telloc_read_state(connection, state, TELLOC_STATE_SIZE);
-    printf("State: %s\n", state);
+    if (ret_state==0)
+        printf("State: %s\n", state);
 
 
 ## TODO
 - [ ] Use static libraries for ffmepg, build static telloc
 - [ ] Save binaries somewhere accessible
+
+
+# Release Notes
+* 2023-02-18: Improved interface by using opaque struct pointer instead of void*; untested on windows.
+
 
 ## License
 

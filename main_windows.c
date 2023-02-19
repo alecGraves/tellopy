@@ -22,11 +22,9 @@ void rgb_to_bi(unsigned char* rgb, unsigned char* bi, int width, int height) {
 
 // test main function
 int main(void) {
-    // connect to the Tello drone from a specific interface
-    void* connection;
-
     // default connect on all interfaces 0.0.0.0
-    if (telloc_connect(&connection)) {
+    tello_connection *connection = telloc_connect();
+    if (!connection) {
         return 1;
     }
 
