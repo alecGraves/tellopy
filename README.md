@@ -95,7 +95,7 @@ To read the most recent state string, you can do the following:
 
 
 # Release Notes
-* 2023-02-18: Improved interface by using opaque struct pointer instead of void*; untested on windows.
+* 2023-02-18: Improved interface by using opaque struct pointer instead of void*
 
 
 ## License
