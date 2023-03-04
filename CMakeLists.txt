@@ -53,3 +53,13 @@ if(BUILD_TESTING)
         target_link_libraries(main telloc)
     endif()
 endif()
+
+if(BUILD_PYTHON)
+    # python bindings
+    # disable warnings for python function api
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable")
+    find_package(PythonLibs 3 REQUIRED)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    add_library(tellopy SHARED tellopy.c)
+    target_link_libraries(tellopy telloc ${PYTHON_LIBRARIES})
+endif()

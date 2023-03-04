@@ -28,7 +28,7 @@ MacOS:
     brew install ffmpeg
 
 
-Debian:
+Debian/Ubuntu:
 
     sudo apt install libavformat-dev libavcodec-dev libavutil-dev libswscale-dev
 
@@ -42,12 +42,35 @@ make
 ```
 
 telloc also comes with a testing program for Windows / Unix-based systems that will attempt to connect to the drone and display information if successful.
+And Python3 bindings.
 
 ```
 mkdir build
 cd build
-cmake .. -DBUILD_TESTING
+cmake .. -DBUILD_TESTING=True -DBUILD_PYTHON=True
 make
+```
+
+### Using the python library :snake:
+1. Build The library with python bindings
+
+```
+mkdir build
+cd build
+cmake .. -DBUILD_PYTHON=True
+make
+```
+
+2. Copy libtellopy.so into the tellopy folder
+```
+cd ..
+cp build/libtellopy.so tellopy
+```
+
+3. Install the python library
+```
+cd ..
+pip install -e tellopy
 ```
 
 ### Using the library

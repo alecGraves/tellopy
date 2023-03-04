@@ -73,7 +73,6 @@ void* thread_state(void* arg) {
         // receive UDP data from the socket using recvfrom
         int bytes_received = (int) recvfrom(sock, buffer, TELLOC_STATE_SIZE, 0, NULL, NULL);
         if (bytes_received < 0) {
-            printf("State thread: error recieving data\n");
             // sleep for 5 ms
             nanosleep((const struct timespec[]){{0, 5000000L}}, NULL);
             continue;
@@ -167,7 +166,6 @@ void* thread_video(void* arg) {
         // receive data on the socket on the desired interface
         int bytes_received = (int) recvfrom(sock, udp_buffer, 65507, 0, NULL, NULL);
         if (bytes_received == -1) {
-            printf("Video thread: error recieving data\n");
             // sleep for 1 ms
             nanosleep((const struct timespec[]){{0, 1000000L}}, NULL);
             continue;
