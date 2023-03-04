@@ -1,12 +1,12 @@
-# telloc
+# telloc 📸🎮
 Cross-platform C library for connecting to the DJI Tello with video support
 
 This was created for the Roadrunner Dynamics Club.
 
-## What?
+## What? 🕹️ 🪟 🍏 🐧
 This library supports Windows, MacOS and Linux developers who might want to make cool apps to control their fancy flying robot.
 
-## Why?
+## Why? ⁉️
 Mostly because existing tello libraries are overly complicated, abandoned, and/or do not work.
 
 This library implements a clean, cross-platform interface for:
@@ -14,8 +14,8 @@ This library implements a clean, cross-platform interface for:
 * Receiving video data as RBG images
 * Receiving state data as a string
 
-## How?
-### Building the library
+## How? 📖
+### Building the library 🚧👷
 To build this library, you simply need to install ffmpeg libraries (avformat, avcodec, avutil, swscale).
 
 Windows:
@@ -51,7 +51,7 @@ cmake .. -DBUILD_TESTING=True -DBUILD_PYTHON=True
 make
 ```
 
-### Using the python library :snake:
+### Using the python library 🐍
 1. Build The library with python bindings
 
 ```
@@ -73,7 +73,7 @@ cd ..
 pip install -e tellopy
 ```
 
-### Using the library
+### Using the library 🪨
 telloc has a simple interface defined in `telloc.h`.
 You can read `main.c` for example usage.
 
@@ -112,17 +112,17 @@ To read the most recent state string, you can do the following:
         printf("State: %s\n", state);
 
 
-## TODO
+## TODO ✔️
 - [ ] Use static libraries for ffmepg, build static telloc
 - [ ] Save binaries somewhere accessible
 
 
-# Release Notes
+# Release Notes 📝
 * 2023-02-18: Improved interface by using opaque struct pointer instead of void*
+* 2023-03-04: Added python bindings
 
+## License ©️ ❎
 
-## License
-
-This is licenced under the Unlicence, so basically, do whatever you want but please don't sue me.
+This is licenced under the 💥 ⚖️⚖️ Unlicence ⚖️ 🚀, so basically, do whatever you want but please don't sue me.
 
 see LICENSE.
