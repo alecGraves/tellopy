@@ -1,4 +1,4 @@
-import libtellopy
+from . import libtellopy
 
 
 def connect():
