@@ -150,7 +150,7 @@ unsigned __stdcall thread_video(void *arg) {
     SOCKET sock = connection->video_socket;
 
     // allocate a buffer for the video data
-    unsigned char *udp_buffer = (unsigned char *) malloc(65507);
+    char *udp_buffer = malloc(65507);
 
     // allocate a buffer for multiple video packets
     unsigned char *h264_buffer = (unsigned char *) malloc(65507 * 10);
@@ -168,7 +168,7 @@ unsigned __stdcall thread_video(void *arg) {
         }
 
         // check if the udp packet is a valid h264 start frame
-        int new_frame = telloc_video_decoder_is_start_code(udp_buffer, bytes_received);
+        int new_frame = telloc_video_decoder_is_start_code((unsigned char*) udp_buffer, bytes_received);
         if (new_frame) {
             // check if there is a previous frame
             if (h264_buffer_size > 0) {
@@ -275,7 +275,7 @@ unsigned __stdcall thread_keepalive(void* arg) {
     SOCKET sock = connection->command_socket;
 
     char buffer[1024];
-    char* query = "battery?";
+    const char* query = "battery?";
 
     // use win32 to get current time in seconds
     unsigned int keepalive_time = GetTickCount() / 1000;
@@ -286,7 +286,7 @@ unsigned __stdcall thread_keepalive(void* arg) {
         // if time since last keepalive is greater than 5 seconds, send keepalive
         if (GetTickCount() / 1000 - keepalive_time > 5) {
             // send the keepalive command
-            telloc_send_command(connection, query, strlen(query), buffer, sizeof(buffer));
+            telloc_send_command(connection, query, (unsigned int) strlen(query), buffer, sizeof(buffer));
             keepalive_time = GetTickCount() / 1000;
         }
         // wait 50 ms
@@ -300,7 +300,7 @@ unsigned __stdcall thread_keepalive(void* arg) {
 
 
 // function to bind a socket to an address and port
-int telloc_bind_udp_socket(SOCKET *sock, char* address, unsigned short port) {
+int telloc_bind_udp_socket(SOCKET *sock, const char* address, unsigned short port) {
     // create a Windows UDP socket
     *sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (*sock == INVALID_SOCKET) {
@@ -339,9 +339,9 @@ telloc_connection *telloc_connect_interface(const char *interface_address) {
     // set the connection's alive flag to 0 to stop any threads
     connection->alive = 0;
 
-    SOCKET command_sock;
-    SOCKET state_sock;
-    SOCKET video_sock;
+    SOCKET command_sock = 0;
+    SOCKET state_sock = 0;
+    SOCKET video_sock = 0;
 
     // create the command mutex (only one command can be sent at a time)
     connection->command_mutex = CreateMutex(NULL, FALSE, NULL);
@@ -378,7 +378,7 @@ telloc_connection *telloc_connect_interface(const char *interface_address) {
     char command[] = "command";
     char response[1024];
     printf("Sending command: %s\n", command);
-    if (telloc_send_command(connection, command, strlen(command), response, 1024) != 0) {
+    if (telloc_send_command(connection, command, (unsigned int) strlen(command), response, 1024) != 0) {
         goto error;
     }
 
@@ -413,9 +413,6 @@ error:
     // free the connection
     free(connection);
 
-    // reset the connection pointer
-    *connection_ptr_addr = NULL;
-
     return NULL;
 }
 
@@ -435,6 +432,11 @@ int telloc_send_command(telloc_connection *connection, const char* command, unsi
         return 1;
     }
 
+    if(length > 1024) {
+        printf("Command too long; Command not sent.\n");
+        return 1;
+    }
+
     // acquire the command mutex
     WaitForSingleObject(connection->command_mutex, INFINITE);
 
@@ -446,7 +448,7 @@ int telloc_send_command(telloc_connection *connection, const char* command, unsi
     addr.sin_family = AF_INET;
     addr.sin_port = htons(TELLOC_COMMAND_PORT);
     addr.sin_addr.s_addr = inet_addr(TELLOC_ADDRESS);
-    int bytes_sent = sendto(sock, command, length, 0, (struct sockaddr *) &addr, sizeof(addr));
+    int bytes_sent = sendto(sock, command, (int) length, 0, (struct sockaddr *) &addr, sizeof(addr));
     if (bytes_sent == SOCKET_ERROR) {
         printf("Error sending command: %d\n", WSAGetLastError());
         goto error;

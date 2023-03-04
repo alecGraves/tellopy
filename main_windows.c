@@ -6,13 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
-#define _CRTIMP
 
-// Function to convert raw rgb frame to bi format for windows display
-void rgb_to_bi(unsigned char* rgb, unsigned char* bi, int width, int height) {
-    int i, j;
-    for (i = 0; i < height; i++) {
-        for (j = 0; j < width; j++) {
+// Convert raw rgb frame to bi format for Windows display
+void rgb_to_bi(const unsigned char* rgb, unsigned char* bi, int width, int height) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
             bi[(i * width + j) * 3 + 0] = rgb[(i * width + j) * 3 + 2];
             bi[(i * width + j) * 3 + 1] = rgb[(i * width + j) * 3 + 1];
             bi[(i * width + j) * 3 + 2] = rgb[(i * width + j) * 3 + 0];
@@ -23,7 +21,7 @@ void rgb_to_bi(unsigned char* rgb, unsigned char* bi, int width, int height) {
 // test main function
 int main(void) {
     // default connect on all interfaces 0.0.0.0
-    tello_connection *connection = telloc_connect();
+    telloc_connection *connection = telloc_connect();
     if (!connection) {
         return 1;
     }
@@ -79,9 +77,14 @@ int main(void) {
     }
 
     // disconnect from the Tello drone
-    if (telloc_disconnect(&connection)) {
+    if (telloc_disconnect(connection)) {
         return 1;
     }
+    connection = NULL;
+
+    // free memory
+    free(image);
+    free(bi);
 
     return 0;
 }

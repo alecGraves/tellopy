@@ -445,6 +445,11 @@ int telloc_send_command(telloc_connection *connection, const char* command, unsi
         return 1;
     }
 
+    if(length > 1024) {
+        printf("Command too long; Command not sent.\n");
+        return 1;
+    }
+
     // acquire the command mutex
     pthread_mutex_lock(&connection->command_mutex);
 
