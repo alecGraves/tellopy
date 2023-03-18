@@ -6,7 +6,7 @@ project(telloc C)
 set(CMAKE_C_STANDARD 99)
 
 # pedantic
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -Werror")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 # check if we are on Windows (should work with MinGW and Visual Studio)
 if (WIN32)

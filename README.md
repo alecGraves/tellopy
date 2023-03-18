@@ -1,4 +1,30 @@
-# telloc 📸🎮
+
+
+# tellopy 📸🎮🐍
+
+Minimal python3 library for reading images from and sending commands to a DJI tello drone.
+
+To build on Windows, install ffmpeg wich chocolatey:
+
+1. install chocolatey
+2. open cmd or terminal as administrator
+3. choco install 
+
+Then install visual studio and build
+
+1. install visual studio
+2. open a developer command prompt
+3. edit build.bat for your version of python
+4. run `build.bat` to compile the telloc python bindings (libtellopy)
+
+Lastly, `pip install tellopy .` inside of this repo.
+
+
+
+Tellopy is based on on telloc (see below:)
+
+## telloc 📸🎮
+
 Cross-platform C library for connecting to the DJI Tello with video support
 
 This was created for the Roadrunner Dynamics Club.
